@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --font-cairo: "Cairo", sans-serif;
+
+  /* مسميات عامة للهوية البصرية */
+  --color-main-bg: #0f1115; /* الخلفية الأساسية[cite: 1] */
+  --color-card-bg: #16191d; /* خلفية العناصر[cite: 1] */
+  --color-brand-primary: #e91e63; /* اللون الأساسي (الزهري حالياً)[cite: 1] */
+  --color-brand-secondary: #8a2be2; /* اللون الثانوي[cite: 1] */
+  --color-text-muted: #9ca3af; /* النصوص الفرعية */
+}
+
+@layer base {
+  body {
+    @apply bg-main-bg text-white font-cairo;
+    direction: rtl;
+  }
+}
+
+/* تجعل الانتقال بين الصفحات يبدو أنعم */
+.active-nav-item {
+  position: relative;
+}
+
+.active-nav-item::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--color-brand-primary);
+  border-radius: 50%;
+}
