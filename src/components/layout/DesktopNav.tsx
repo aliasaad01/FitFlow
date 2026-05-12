@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 
 const DesktopNav = () => {
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
 
   const navLinks = [
     { path: "/", label: "الرئيسية" },
@@ -30,6 +30,17 @@ const DesktopNav = () => {
               {link.label}
             </NavLink>
           ))}
+
+          {user?.role === "ADMIN" && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-xl bg-brand-primary/10 border border-brand-primary/20 font-bold transition-all ${isActive ? "bg-brand-primary text-white" : "text-brand-primary hover:bg-brand-primary hover:text-white"}`
+              }
+            >
+              لوحة التحكم
+            </NavLink>
+          )}
         </div>
 
         <button

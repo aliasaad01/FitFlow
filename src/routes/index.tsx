@@ -15,11 +15,11 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* 1. المسارات العامة (بدون Layout وبدون حماية) */}
+      {/* 1. المسارات العامة */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* 2. مسارات المستخدمين (محمية وتحت الـ MainLayout) */}
+      {/* 2. مسارات المستخدمين (المحمية) */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
@@ -30,12 +30,14 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
-      {/* 3. مسارات الأدمن (حماية إضافية للـ Role) */}
+      {/* 3. مسار الأدمن (تعديل: حماية الصلاحية + فصل الـ Layout إذا لزم الأمر) */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+        {/* إذا بدك الأدمن يشوف الـ Navbar العادي خليه جوا MainLayout */}
+        {/* إذا بدك صفحة كاملة خاصة فيه (وهو الأرجح) خليها هيك: */}
         <Route path="/admin" element={<AdminDashboard />} />
       </Route>
 
-      {/* 4. مسار افتراضي في حال الخطأ */}
+      {/* 4. مسار افتراضي */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
