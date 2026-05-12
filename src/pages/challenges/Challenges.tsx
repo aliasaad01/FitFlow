@@ -10,6 +10,7 @@ import {
   FaGem,
 } from "react-icons/fa";
 import { BiTargetLock } from "react-icons/bi";
+import type { ChallengeItem } from "../../types";
 
 const Challenges = () => {
   const { user, addPoints } = useAuthStore();
@@ -26,7 +27,7 @@ const Challenges = () => {
     { day: "ج", status: "pending" },
   ];
 
-  const [challenges, setChallenges] = useState([
+  const [challenges, setChallenges] = useState<ChallengeItem[]>([
     {
       id: 1,
       title: "تحدي الـ 10,000 خطوة",
@@ -241,7 +242,7 @@ const Challenges = () => {
               </div>
 
               <AnimatePresence mode="wait">
-                {completedId === ch.id || (ch as any).completed ? (
+                {completedId === ch.id || ch.completed ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}

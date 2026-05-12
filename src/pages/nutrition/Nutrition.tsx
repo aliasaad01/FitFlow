@@ -201,7 +201,7 @@ const Nutrition = () => {
 
       {/* 3. Content Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {activeTab === "recipes" &&
             content.recipes.map((recipe, i) => (
               <motion.div

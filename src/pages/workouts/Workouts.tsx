@@ -128,7 +128,7 @@ const Workouts = () => {
 
       {/* 2. Workouts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {filteredWorkouts.map((workout) => (
             <motion.div
               key={workout.id}

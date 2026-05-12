@@ -8,7 +8,9 @@ import {
   FaSearch,
   FaTrashAlt,
   FaCheckCircle,
+  FaArrowRight,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
   const { usersList, user: currentUser } = useAuthStore();
@@ -56,11 +58,20 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-main-bg text-right p-6" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+      <div className="pb-4 border-b border-gray-800">
+        <Link
+          to={"/"}
+          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-2xl border border-white/10 transition-all font-bold w-fit"
+        >
+          <FaArrowRight className="text-brand-primary" /> العودة للموقع الرئيسي
+        </Link>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 mt-4">
         <div>
           <h1 className="text-3xl font-black text-white">إدارة نظام FitFlow</h1>
           <p className="text-gray-400">
-            مرحباً {currentUser?.name}، لديك كامل الصلاحيات.
+            مرحباً {currentUser?.name}، لديك كامل الصلاحيات في لوحة التحكم.
           </p>
         </div>
 

@@ -1,3 +1,5 @@
+import type { JSX } from "react";
+
 export type Role = "USER" | "ADMIN";
 
 export interface User {
@@ -76,4 +78,16 @@ export interface UserStats {
   restingHR: number;
   avgSleep: number;
   timeSpent: number; // إجمالي الوقت بالدقائق[cite: 1]
+}
+
+export interface ChallengeItem {
+  id: number;
+  title: string;
+  icon: JSX.Element;
+  points: number;
+  target: number;
+  current: number;
+  isBig: boolean;
+  desc: string;
+  completed?: boolean; // علامة الاستفهام تعني أنه اختياري
 }
