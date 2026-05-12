@@ -180,16 +180,16 @@ const Nutrition = () => {
 
       {/* 2. Navigation Tabs - Mobile Optimized (Horizontal Scroll) */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl w-fit backdrop-blur-sm">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveTab(cat.id)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all
                 ${
                   activeTab === cat.id
-                    ? "bg-brand-primary text-white shadow-[0_8px_20px_rgba(255,105,180,0.3)]"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-brand-primary text-white shadow-[0_0_20px_rgba(255,105,180,0.3)]"
+                    : "bg-white/5 text-gray-400 hover:bg-white/10"
                 }
               `}
             >
