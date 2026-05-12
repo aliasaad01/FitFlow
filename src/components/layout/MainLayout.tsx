@@ -13,7 +13,7 @@ const MainLayout = () => {
       <TopNav />
 
       {/* المحتوى الرئيسي */}
-      <main className="grow pb-4 px-4 pt-6 max-w-7xl mx-auto w-full mt-23 md:mt-0">
+      <main className="grow pb-4 px-4 pt-2 md:pt-6 max-w-7xl mx-auto w-full mt-23 md:mt-0">
         <Outlet />
       </main>
 

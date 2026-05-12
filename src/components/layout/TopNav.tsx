@@ -5,7 +5,7 @@ const TopNav = () => {
   const { logout, user } = useAuthStore();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-card-bg/80 backdrop-blur-lg border-t border-white/5 px-2 py-3 z-50 md:hidden">
+    <nav className="fixed top-0 left-0 right-0 bg-card-bg/80 backdrop-blur-lg border-t border-white/5 px-2 py-1 z-50 md:hidden">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <div className="text-2xl font-bold text-brand-primary">FitFlow</div>
 
