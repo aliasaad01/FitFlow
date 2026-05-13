@@ -33,7 +33,7 @@ const Home = () => {
             animate={{ opacity: 1 }}
             className="mb-4 text-brand-primary font-medium"
           >
-            مرحباً بكِ في FitFlow ✨
+            مرحباً بكِ في FitFlow
           </motion.div>
           <motion.h1
             initial={{ y: 20, opacity: 0 }}
