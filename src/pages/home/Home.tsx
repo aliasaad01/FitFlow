@@ -20,7 +20,7 @@ const Home = () => {
         {/* الصورة الخلفية مع طبقة تغميق */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2069&auto=format&fit=crop"
+            src="/imges/home-3.avif"
             className="w-full h-full object-cover opacity-40"
             alt="Fitness Background"
           />
@@ -127,15 +127,15 @@ const Home = () => {
           {[
             {
               text: "روتين الصباح",
-              img: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2069&auto=format&fit=crop",
+              img: "/imges/home-1.jfif",
             },
             {
               text: "القوة الأساسية",
-              img: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2069&auto=format&fit=crop",
+              img: "/imges/home-3.avif",
             },
             {
               text: "تمارين الاستطالة",
-              img: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2069&auto=format&fit=crop",
+              img: "/imges/home-2.jfif",
             },
           ].map((item, i) => (
             <motion.div

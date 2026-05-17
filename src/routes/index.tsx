@@ -6,9 +6,9 @@ import ProtectedRoute from "./ProtectedRoute";
 import { lazy, Suspense } from "react";
 import PageLoader from "../components/layout/PageLoader";
 
+import Home from "../pages/home/Home";
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
-const Home = lazy(() => import("../pages/home/Home"));
 const Workouts = lazy(() => import("../pages/workouts/Workouts"));
 const Challenges = lazy(() => import("../pages/challenges/Challenges"));
 const Nutrition = lazy(() => import("../pages/nutrition/Nutrition"));

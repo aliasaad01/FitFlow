@@ -24,22 +24,19 @@ const Nutrition = () => {
         title: "بودينغ بذور الشيا والتوت",
         calories: "180 سعرة",
         ingredients: "بذور شيا، حليب لوز، عسل، توت بري",
-        image:
-          "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=500",
+        image: "/imges/nutrition-1.jfif",
       },
       {
         title: "توست الأفوكادو بالبيض",
         calories: "250 سعرة",
         ingredients: "خبز بر، أفوكادو، بيض مسلوق، فلفل أحمر",
-        image:
-          "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=500",
+        image: "/imges/nutrition-2.jfif",
       },
       {
         title: "كاسات الزبادي والجرانولا",
         calories: "210 سعرة",
         ingredients: "زبادي يوناني، جرانولا منزلية، مكسرات، عسل",
-        image:
-          "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=500",
+        image: "/imges/nutrition-3.jfif",
       },
 
       // وجبات غداء خفيفة
@@ -47,22 +44,19 @@ const Nutrition = () => {
         title: "سلطة الكينوا والحمص",
         calories: "320 سعرة",
         ingredients: "كينوا، حمص مسلوق، بقدونس، خيار، ليمون",
-        image:
-          "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=500",
+        image: "/imges/nutrition-4.jfif",
       },
       {
         title: "رول الدجاج بالخس",
         calories: "280 سعرة",
         ingredients: "صدور دجاج مشوية، أوراق خس كبيرة، صوص زبادي",
-        image:
-          "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=500",
+        image: "/imges/nutrition-5.jfif",
       },
       {
         title: "سلطة التونة بالذرة",
         calories: "240 سعرة",
         ingredients: "تونة بالماء، ذرة، فلفل ملون، زيت زيتون",
-        image:
-          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500",
+        image: "/imges/nutrition-6.jfif",
       },
 
       // وجبات عشاء وسناك
@@ -70,15 +64,13 @@ const Nutrition = () => {
         title: "شوربة العدس والليمون",
         calories: "150 سعرة",
         ingredients: "عدس أصفر، بصل، كمون، عصير ليمون",
-        image:
-          "https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=500",
+        image: "/imges/nutrition-7.jfif",
       },
       {
         title: "كرات الطاقة بالتمر",
         calories: "90 سعرة/حبة",
         ingredients: "تمر، شوفان، زبدة فول سوداني، كاكاو خام",
-        image:
-          "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?q=80&w=500",
+        image: "/imges/nutrition-8.jfif",
       },
     ],
     swaps: [
