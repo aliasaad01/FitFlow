@@ -20,7 +20,7 @@ const Home = () => {
         {/* الصورة الخلفية مع طبقة تغميق */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/imges/home-3.avif"
+            src="/imges/home-3.webp"
             className="w-full h-full object-cover opacity-40"
             alt="Fitness Background"
           />
@@ -127,15 +127,15 @@ const Home = () => {
           {[
             {
               text: "روتين الصباح",
-              img: "/imges/home-1.jfif",
+              img: "/imges/home-1.webp",
             },
             {
               text: "القوة الأساسية",
-              img: "/imges/home-3.avif",
+              img: "/imges/home-3.webp",
             },
             {
               text: "تمارين الاستطالة",
-              img: "/imges/home-2.jfif",
+              img: "/imges/home-2.webp",
             },
           ].map((item, i) => (
             <motion.div
@@ -176,8 +176,8 @@ const Home = () => {
             <div key={i} className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden">
                 <img
-                  src="/imges/myPhoto-p.png"
-                  alt="/imges/myPhoto-p.png"
+                  src="/imges/myPhoto.png"
+                  alt="/myPhoto.png"
                   className="w-full h-full object-cover"
                 />
               </div>

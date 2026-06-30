@@ -28,7 +28,7 @@ export const MOCK_CHALLENGES: Challenge[] = [
     title: "تحدي 10,000 خطوة",
     description: "نشطي دورتكِ الدموية عبر المشي يومياً",
     participants: 1200,
-    progress: 72, // 7,200 من أصل 10,000[cite: 1]
+    progress: 72,
     status: "Active",
     rewardPoints: 100,
   },
