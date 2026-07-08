@@ -36,8 +36,6 @@ const AppRoutes = () => {
 
         {/* 3. مسار الأدمن (تعديل: حماية الصلاحية + فصل الـ Layout إذا لزم الأمر) */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          {/* إذا بدك الأدمن يشوف الـ Navbar العادي خليه جوا MainLayout */}
-          {/* إذا بدك صفحة كاملة خاصة فيه (وهو الأرجح) خليها هيك: */}
           <Route path="/admin" element={<AdminDashboard />} />
         </Route>
 

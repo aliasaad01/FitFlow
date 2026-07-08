@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // تصحيح الاستيراد وحل مشكلة التكرار والمكتبة
+import { useNutritionStore } from "../../store/nutritionStore";
 import {
   FaUtensils,
   FaLightbulb,
@@ -8,8 +9,169 @@ import {
   FaChevronLeft,
 } from "react-icons/fa";
 
+// البيانات الاحتياطية (Fallback) مع إضافة حقل الـ id لحل خطأ الـ TypeScript
+const localFallback = {
+  recipes: [
+    {
+      id: "f1",
+      title: "بودينغ بذور الشيا والتوت",
+      calories: "180 سعرة",
+      ingredients: "بذور شيا، حليب لوز، عسل، توت بري",
+      image: "/imges/nutrition-1.jfif",
+    },
+    {
+      id: "f2",
+      title: "توست الأفوكادو بالبيض",
+      calories: "250 سعرة",
+      ingredients: "خبز بر، أفوكادو، بيض مسلوق، فلفل أحمر",
+      image: "/imges/nutrition-2.jfif",
+    },
+    {
+      id: "f3",
+      title: "كاسات الزبادي والجرانولا",
+      calories: "210 سعرة",
+      ingredients: "زبادي يوناني، جرانولا منزلية، مكسرات، عسل",
+      image: "/imges/nutrition-3.jfif",
+    },
+    {
+      id: "f4",
+      title: "سلطة الكينوا والحمص",
+      calories: "320 سعرة",
+      ingredients: "كينوا، حمص مسلوق، بقدونس، خيار، ليمون",
+      image: "/imges/nutrition-4.jfif",
+    },
+    {
+      id: "f5",
+      title: "رول الدجاج بالخس",
+      calories: "280 سعرة",
+      ingredients: "صدور دجاج مشوية، أوراق خس كبيرة، صوص زبادي",
+      image: "/imges/nutrition-5.jfif",
+    },
+    {
+      id: "f6",
+      title: "سلطة التونة بالذرة",
+      calories: "240 سعرة",
+      ingredients: "تونة بالماء، ذرة، فلفل ملون، زيت زيتون",
+      image: "/imges/nutrition-6.jfif",
+    },
+    {
+      id: "f7",
+      title: "شوربة العدس والليمون",
+      calories: "150 سعرة",
+      ingredients: "عدس أصفر، بصل، كمون، عصير ليمون",
+      image: "/imges/nutrition-7.jfif",
+    },
+    {
+      id: "f8",
+      title: "كرات الطاقة بالتمر",
+      calories: "90 سعرة/حبة",
+      ingredients: "تمر، شوفان، زبدة فول سوداني، كاكاو خام",
+      image: "/imges/nutrition-8.jfif",
+    },
+  ],
+  swaps: [
+    {
+      id: "s1",
+      bad: "الخبز الأبيض",
+      good: "خبز الحبوب الكاملة",
+      why: "ألياف أكثر وشبع يدوم لفترة أطول.",
+    },
+    {
+      id: "s2",
+      bad: "السكر الأبيض",
+      good: "ستيفيا أو عسل طبيعي",
+      why: "تجنب ارتفاع مستويات الأنسولين المفاجئ.",
+    },
+    {
+      id: "s3",
+      bad: "البطاطس المقلية",
+      good: "البطاطس الحلوة المشوية",
+      why: "فيتامين A أكثر ومؤشر غلايسمي أقل.",
+    },
+    {
+      id: "s4",
+      bad: "المشروبات الغازية",
+      good: "مياه فوارة مع ليمون",
+      why: "ترطيب حقيقي بدون سكريات مضافة.",
+    },
+    {
+      id: "s5",
+      bad: "الزيوت المهدرجة",
+      good: "زيت الزيتون أو بخاخ الزبدة",
+      why: "دهون صحية تدعم صحة القلب والهرمونات.",
+    },
+    {
+      id: "s6",
+      bad: "الأرز الأبيض",
+      good: "أرز القرنبيط أو الكينوا",
+      why: "سعرات أقل بـ 70% بروتين أعلى.",
+    },
+    {
+      id: "s7",
+      bad: "الحلويات المصنعة",
+      good: "فواكه مجففة أو شوكولاتة داكنة",
+      why: "مضادات أكسدة وسكر طبيعي غير مكرر.",
+    },
+    {
+      id: "s8",
+      bad: "صوص المايونيز",
+      good: "صوص الزبادي والثوم",
+      why: "بروتين أعلى ودهون أقل بكثير.",
+    },
+  ],
+  tips: [
+    {
+      id: "t1",
+      title: "قاعدة الـ 80/20",
+      desc: "كلي بذكاء ونظام 80% من وقتك، واتركي 20% للاستمتاع بوجباتك المفضلة بمرونة.",
+    },
+    {
+      id: "t2",
+      title: "التنفس قبل الأكل",
+      desc: "خذي 3 أنفاس عميقة قبل البدء بالأكل لتهدئة الجهاز العصبي وتحسين الهضم.",
+    },
+    {
+      id: "t3",
+      title: "شرب الماء والانتظار",
+      desc: "أحياناً يشعر الجسم بالعطش ويترجمه كجوع، اشربي كأساً وانتظري 10 دقائق.",
+    },
+    {
+      id: "t4",
+      title: "قاعدة المضغ البطئ",
+      desc: "امضغي اللقمة 15-20 مرة؛ هذا يعطي الدماغ وقتاً لإرسال إشارات الشبع (تحتاج 20 دقيقة).",
+    },
+    {
+      id: "t5",
+      title: "البروتين أولاً",
+      desc: "ابدئي وجبتك بالبروتين ثم الألياف ثم الكربوهيدرات لتقليل امتصاص السكر.",
+    },
+    {
+      id: "t6",
+      title: "النوم والشهية",
+      desc: "قلة النوم ترفع هرمون الجوع (Ghrelin) وتصعب عليكِ مقاومة السكريات.",
+    },
+    {
+      id: "t7",
+      title: "الخضروات الورقية",
+      desc: "اجعلي نصف طبقك دائماً من الخضروات الورقية؛ حجم كبير وسعرات شبه معدومة.",
+    },
+    {
+      id: "t8",
+      title: "تحضير الوجبات (Meal Prep)",
+      desc: "تجهيز وجباتك مسبقاً يحميكِ من خيارات اللحظة الأخيرة غير الصحية عند الجوع.",
+    },
+  ],
+};
+
 const Nutrition = () => {
   const [activeTab, setActiveTab] = useState("recipes");
+  const { recipes, swaps, tips, isLoading, fetchNutritionData } =
+    useNutritionStore();
+
+  useEffect(() => {
+    const unsubscribe = fetchNutritionData();
+    return () => unsubscribe();
+  }, [fetchNutritionData]);
 
   const categories = [
     { id: "recipes", label: "وصفات", icon: <FaUtensils /> },
@@ -17,139 +179,9 @@ const Nutrition = () => {
     { id: "tips", label: "نصائح", icon: <FaLightbulb /> },
   ];
 
-  const content = {
-    recipes: [
-      // وجبات خفيفة وفطور
-      {
-        title: "بودينغ بذور الشيا والتوت",
-        calories: "180 سعرة",
-        ingredients: "بذور شيا، حليب لوز، عسل، توت بري",
-        image: "/imges/nutrition-1.jfif",
-      },
-      {
-        title: "توست الأفوكادو بالبيض",
-        calories: "250 سعرة",
-        ingredients: "خبز بر، أفوكادو، بيض مسلوق، فلفل أحمر",
-        image: "/imges/nutrition-2.jfif",
-      },
-      {
-        title: "كاسات الزبادي والجرانولا",
-        calories: "210 سعرة",
-        ingredients: "زبادي يوناني، جرانولا منزلية، مكسرات، عسل",
-        image: "/imges/nutrition-3.jfif",
-      },
-
-      // وجبات غداء خفيفة
-      {
-        title: "سلطة الكينوا والحمص",
-        calories: "320 سعرة",
-        ingredients: "كينوا، حمص مسلوق، بقدونس، خيار، ليمون",
-        image: "/imges/nutrition-4.jfif",
-      },
-      {
-        title: "رول الدجاج بالخس",
-        calories: "280 سعرة",
-        ingredients: "صدور دجاج مشوية، أوراق خس كبيرة، صوص زبادي",
-        image: "/imges/nutrition-5.jfif",
-      },
-      {
-        title: "سلطة التونة بالذرة",
-        calories: "240 سعرة",
-        ingredients: "تونة بالماء، ذرة، فلفل ملون، زيت زيتون",
-        image: "/imges/nutrition-6.jfif",
-      },
-
-      // وجبات عشاء وسناك
-      {
-        title: "شوربة العدس والليمون",
-        calories: "150 سعرة",
-        ingredients: "عدس أصفر، بصل، كمون، عصير ليمون",
-        image: "/imges/nutrition-7.jfif",
-      },
-      {
-        title: "كرات الطاقة بالتمر",
-        calories: "90 سعرة/حبة",
-        ingredients: "تمر، شوفان، زبدة فول سوداني، كاكاو خام",
-        image: "/imges/nutrition-8.jfif",
-      },
-    ],
-    swaps: [
-      {
-        bad: "الخبز الأبيض",
-        good: "خبز الحبوب الكاملة",
-        why: "ألياف أكثر وشبع يدوم لفترة أطول.",
-      },
-      {
-        bad: "السكر الأبيض",
-        good: "ستيفيا أو عسل طبيعي",
-        why: "تجنب ارتفاع مستويات الأنسولين المفاجئ.",
-      },
-      {
-        bad: "البطاطس المقلية",
-        good: "البطاطس الحلوة المشوية",
-        why: "فيتامين A أكثر ومؤشر غلايسمي أقل.",
-      },
-      {
-        bad: "المشروبات الغازية",
-        good: "مياه فوارة مع ليمون",
-        why: "ترطيب حقيقي بدون سكريات مضافة.",
-      },
-      {
-        bad: "الزيوت المهدرجة",
-        good: "زيت الزيتون أو بخاخ الزبدة",
-        why: "دهون صحية تدعم صحة القلب والهرمونات.",
-      },
-      {
-        bad: "الأرز الأبيض",
-        good: "أرز القرنبيط أو الكينوا",
-        why: "سعرات أقل بـ 70% وبروتين أعلى.",
-      },
-      {
-        bad: "الحلويات المصنعة",
-        good: "فواكه مجففة أو شوكولاتة داكنة",
-        why: "مضادات أكسدة وسكر طبيعي غير مكرر.",
-      },
-      {
-        bad: "صوص المايونيز",
-        good: "صوص الزبادي والثوم",
-        why: "بروتين أعلى ودهون أقل بكثير.",
-      },
-    ],
-    tips: [
-      {
-        title: "قاعدة الـ 80/20",
-        desc: "كلي بذكاء ونظام 80% من وقتك، واتركي 20% للاستمتاع بوجباتك المفضلة بمرونة.",
-      },
-      {
-        title: "التنفس قبل الأكل",
-        desc: "خذي 3 أنفاس عميقة قبل البدء بالأكل لتهدئة الجهاز العصبي وتحسين الهضم.",
-      },
-      {
-        title: "شرب الماء والانتظار",
-        desc: "أحياناً يشعر الجسم بالعطش ويترجمه كجوع، اشربي كأساً وانتظري 10 دقائق.",
-      },
-      {
-        title: "قاعدة المضغ البطئ",
-        desc: "امضغي اللقمة 15-20 مرة؛ هذا يعطي الدماغ وقتاً لإرسال إشارات الشبع (تحتاج 20 دقيقة).",
-      },
-      {
-        title: "البروتين أولاً",
-        desc: "ابدئي وجبتك بالبروتين ثم الألياف ثم الكربوهيدرات لتقليل امتصاص السكر.",
-      },
-      {
-        title: "النوم والشهية",
-        desc: "قلة النوم ترفع هرمون الجوع (Ghrelin) وتصعب عليكِ مقاومة السكريات.",
-      },
-      {
-        title: "الخضروات الورقية",
-        desc: "اجعلي نصف طبقك دائماً من الخضروات الورقية؛ حجم كبير وسعرات شبه معدومة.",
-      },
-      {
-        title: "تحضير الوجبات (Meal Prep)",
-        desc: "تجهيز وجباتك مسبقاً يحميكِ من خيارات اللحظة الأخيرة غير الصحية عند الجوع.",
-      },
-    ],
-  };
+  const currentRecipes = recipes.length > 0 ? recipes : localFallback.recipes;
+  const currentSwaps = swaps.length > 0 ? swaps : localFallback.swaps;
+  const currentTips = tips.length > 0 ? tips : localFallback.tips;
 
   return (
     <div
@@ -166,13 +198,14 @@ const Nutrition = () => {
           وقود <span className="text-brand-primary">الإزهار</span> 🌿
         </motion.h1>
         <p className="text-gray-400 text-sm md:text-lg max-w-xl">
-          التغذية هي 70% من النتيجة. اكتشفي خياراتنا المختارة لتعزيز طاقتكِ.
+          التغذية هي 70% من النتيجة. اكتشفي خياراتنا المختارة لتعزيز طاقتكِ
+          السحابية.
         </p>
       </section>
 
-      {/* 2. Navigation Tabs - Mobile Optimized (Horizontal Scroll) */}
+      {/* 2. Navigation Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -191,16 +224,23 @@ const Nutrition = () => {
         </div>
       </div>
 
+      {isLoading && recipes.length === 0 && (
+        <div className="text-center p-10 text-gray-500 animate-pulse">
+          جاري فحص البيانات السحابية...
+        </div>
+      )}
+
       {/* 3. Content Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
         <AnimatePresence>
           {activeTab === "recipes" &&
-            content.recipes.map((recipe, i) => (
+            currentRecipes.map((recipe, i) => (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                key={i}
+                transition={{ duration: 0.3 }}
+                key={recipe.id || i}
                 className="bg-card-bg border border-white/5 rounded-[28px] overflow-hidden group active:scale-[0.98] transition-transform"
               >
                 <div className="h-52 md:h-60 overflow-hidden relative">
@@ -228,12 +268,13 @@ const Nutrition = () => {
             ))}
 
           {activeTab === "swaps" &&
-            content.swaps.map((swap, i) => (
+            currentSwaps.map((swap, i) => (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                key={i}
-                className="bg-white/5 border border-white/10 p-6 rounded-[28px] flex flex-col justify-between gap-4 relative overflow-hidden group"
+                exit={{ opacity: 0 }}
+                key={swap.id || i}
+                className="bg-card-bg border border-white/10 p-6 rounded-[28px] flex flex-col justify-between gap-4 relative overflow-hidden group"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="text-center flex-1">
@@ -263,11 +304,12 @@ const Nutrition = () => {
             ))}
 
           {activeTab === "tips" &&
-            content.tips.map((tip, i) => (
+            currentTips.map((tip, i) => (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                key={i}
+                exit={{ opacity: 0 }}
+                key={tip.id || i}
                 className="bg-linear-to-br from-brand-primary/10 to-transparent border border-brand-primary/20 p-6 rounded-[28px] relative group"
               >
                 <div className="flex items-start gap-4">
@@ -288,10 +330,10 @@ const Nutrition = () => {
         </AnimatePresence>
       </div>
 
-      {/* 4. Bottom Info - Sticky feel for mobile */}
+      {/* 4. Bottom Info */}
       <div className="bg-white/5 border border-white/10 p-6 rounded-[28px] text-center md:text-right">
         <h4 className="text-white font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
-          <FaLightbulb className="text-brand-primary" /> هل لديكِ استفسار؟
+          <FaLightbulb className="text-brand-primary" /> هل لديكِ استفسار?
         </h4>
         <p className="text-xs text-gray-400 leading-relaxed">
           يمكنكِ دائماً مراسلة خبيرة التغذية عبر قسم المحادثة للحصول على خطة

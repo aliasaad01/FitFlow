@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
+import { useWorkoutStore } from "../../store/workoutStore";
 import {
   FaPlay,
   FaCheck,
@@ -10,10 +11,54 @@ import {
 } from "react-icons/fa";
 import { MdOutlineTimer, MdFitnessCenter } from "react-icons/md";
 
+// البيانات الاحتياطية (Fallback) بمعرفات نصية لتطابق Firestore
+const localFallbackWorkouts = [
+  {
+    id: "w1",
+    category: "main",
+    title: "سكوات صحيح (Squat)",
+    duration: "45 ثانية",
+    level: "مبتدئ - متقدم",
+    video:
+      "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-squats-in-the-gym-23150-large.mp4",
+    tips: "حافظي على استقامة الظهر واجعلي الركبتين باتجاه أصابع القدم.",
+    correction: "خطأ شائع: تقوس الظهر أو تجاوز الركبة لأصابع القدم.",
+  },
+  {
+    id: "w2",
+    category: "main",
+    title: "لانجز (Lunges)",
+    duration: "60 ثانية",
+    level: "متوسط",
+    video:
+      "https://assets.mixkit.co/videos/preview/mixkit-young-woman-doing-lunges-at-the-gym-23154-large.mp4",
+    tips: "النزول بزاوية 90 درجة للركبتين.",
+    correction: "خطأ شائع: عدم توازن الجسم أو النزول السريع جداً.",
+  },
+  {
+    id: "w3",
+    category: "warmup",
+    title: "إحماء المفاصل العلوي",
+    duration: "5 دقائق",
+    level: "للجميع",
+    video:
+      "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-arm-stretches-in-the-gym-23146-large.mp4",
+    tips: "حركات دائرية بطيئة لتنشيط الدورة الدموية.",
+    correction: "تجنبي الحركات الفجائية السريعة.",
+  },
+];
+
 const Workouts = () => {
   const { user, addPoints } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("main"); // main, warmup, stretch
-  const [completedWorkouts, setCompletedWorkouts] = useState<number[]>([]);
+  const { workouts, isLoading, fetchWorkouts } = useWorkoutStore();
+  const [activeTab, setActiveTab] = useState("main");
+  const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([]); // تم تغيير النوع إلى string[]
+
+  // الاستماع للبيانات السحابية فور تحميل الصفحة
+  useEffect(() => {
+    const unsubscribe = fetchWorkouts();
+    return () => unsubscribe();
+  }, [fetchWorkouts]);
 
   const categories = [
     { id: "warmup", label: "إحماء عام", icon: <MdOutlineTimer /> },
@@ -21,62 +66,31 @@ const Workouts = () => {
     { id: "stretch", label: "ستريتشات", icon: <FaLevelUpAlt /> },
   ];
 
-  const workouts = [
-    {
-      id: 1,
-      category: "main",
-      title: "سكوات صحيح (Squat)",
-      duration: "45 ثانية",
-      level: "مبتدئ - متقدم",
-      video:
-        "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-squats-in-the-gym-23150-large.mp4",
-      tips: "حافظي على استقامة الظهر واجعلي الركبتين باتجاه أصابع القدم.",
-      correction: "خطأ شائع: تقوس الظهر أو تجاوز الركبة لأصابع القدم.",
-    },
-    {
-      id: 2,
-      category: "main",
-      title: "لانجز (Lunges)",
-      duration: "60 ثانية",
-      level: "متوسط",
-      video:
-        "https://assets.mixkit.co/videos/preview/mixkit-young-woman-doing-lunges-at-the-gym-23154-large.mp4",
-      tips: "النزول بزاوية 90 درجة للركبتين.",
-      correction: "خطأ شائع: عدم توازن الجسم أو النزول السريع جداً.",
-    },
-    {
-      id: 3,
-      category: "warmup",
-      title: "إحماء المفاصل العلوي",
-      duration: "5 دقائق",
-      level: "للجميع",
-      video:
-        "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-arm-stretches-in-the-gym-23146-large.mp4",
-      tips: "حركات دائرية بطيئة لتنشيط الدورة الدموية.",
-      correction: "تجنبي الحركات الفجائية السريعة.",
-    },
-  ];
-
-  const handleWorkoutComplete = (id: number) => {
+  const handleWorkoutComplete = (id: string) => {
     if (!completedWorkouts.includes(id)) {
-      addPoints(5); // 5 نقاط لكل تمرين
+      addPoints(5); // إضافة 5 نقاط في المتجر المحلي/السحابي
       setCompletedWorkouts([...completedWorkouts, id]);
     }
   };
 
-  const filteredWorkouts = workouts.filter((w) => w.category === activeTab);
+  // دمج البيانات: إذا كانت مصفوفة Firebase فارغة، نستخدم المحلية
+  const currentWorkouts =
+    workouts.length > 0 ? workouts : localFallbackWorkouts;
+  const filteredWorkouts = currentWorkouts.filter(
+    (w) => w.category === activeTab,
+  );
 
   return (
     <div
-      className="max-w-6xl mx-auto px-4 py-12 space-y-12 text-right"
+      className="max-w-6xl mx-auto px-4 py-12 space-y-12 text-right mb-20 md:mb-0"
       dir="rtl"
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         {/* 1. Header & Tabs */}
-        <section className="space-y-6">
+        <section className="space-y-6 flex-1">
           <div>
             <h1 className="text-4xl font-black text-white mb-2">
-              مكتبة التمارين
+              مكتبة التمارين 🏋️‍♀️
             </h1>
             <p className="text-gray-400">
               فيديوهات قصيرة لتعليمكِ الأداء الصحيح بكل دقة.
@@ -102,6 +116,7 @@ const Workouts = () => {
           </div>
         </section>
 
+        {/* جوهرة النقاط الحالية */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -125,6 +140,12 @@ const Workouts = () => {
           </div>
         </motion.div>
       </div>
+
+      {isLoading && workouts.length === 0 && (
+        <div className="text-center p-10 text-gray-500 animate-pulse">
+          جاري التحقق من مكتبة التمارين السحابية...
+        </div>
+      )}
 
       {/* 2. Workouts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -157,11 +178,11 @@ const Workouts = () => {
 
               {/* Content Section */}
               <div className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-bold text-white">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="text-xl font-bold text-white leading-tight">
                     {workout.title}
                   </h3>
-                  <span className="text-[10px] bg-brand-primary/10 text-brand-primary px-2 py-1 rounded-full font-bold uppercase">
+                  <span className="text-[10px] bg-brand-primary/10 text-brand-primary px-2 py-1 rounded-full font-bold uppercase shrink-0">
                     {workout.level}
                   </span>
                 </div>
@@ -181,9 +202,11 @@ const Workouts = () => {
                     <FaInfoCircle className="text-brand-primary mt-0.5 shrink-0" />
                     {workout.tips}
                   </p>
-                  <p className="text-[11px] text-red-400/80 italic border-t border-white/5 pt-2 mt-2">
-                    {workout.correction}
-                  </p>
+                  {workout.correction && (
+                    <p className="text-[11px] text-red-400/80 italic border-t border-white/5 pt-2 mt-2">
+                      {workout.correction}
+                    </p>
+                  )}
                 </div>
 
                 <button

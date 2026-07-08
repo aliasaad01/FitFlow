@@ -13,9 +13,19 @@ export interface User {
   tier: "Bronze" | "Silver" | "Gold"; // مستوى العضوية
   streak: number; // الأيام المتتالية
   joinedDate: string;
+  photoURL?: string;
+  beforeImg?: string;
+  afterImg?: string;
 }
 
-export type WorkoutLevel = "Beginner" | "Medium" | "Advanced";
+export type WorkoutLevel =
+  | "Beginner"
+  | "Medium"
+  | "Advanced"
+  | "مبتدئ"
+  | "متوسط"
+  | "متقدم"
+  | "عام";
 export type WorkoutCategory =
   | "Yoga"
   | "HIIT"
@@ -26,12 +36,13 @@ export type WorkoutCategory =
 export interface Workout {
   id: string;
   title: string;
-  duration: number; // بالدقائق
-  level: WorkoutLevel;
-  category: WorkoutCategory;
-  thumbnail: string; // صورة التمرين
-  videoUrl: string;
-  isCompleted?: boolean; // لمتابعة الإنجاز[cite: 1]
+  duration: number | string; // يقبل عدد الدقائق أو نص مثل "25 دقيقة"
+  level?: WorkoutLevel | string;
+  category?: WorkoutCategory;
+  thumbnail?: string; // صورة التمرين الأساسية
+  image?: string; // أضفناها كبديل لدعم رابط الصور في البيانات الافتراضية
+  videoUrl?: string;
+  isCompleted?: boolean; // لمتابعة الإنجاز
 }
 
 export interface Challenge {
@@ -39,8 +50,8 @@ export interface Challenge {
   title: string;
   description: string;
   icon?: string;
-  participants: number; // عدد المشاركات[cite: 1]
-  progress: number; // نسبة الإنجاز للمستخدم الحالي[cite: 1]
+  participants: number; // عدد المشاركات
+  progress: number; // نسبة الإنجاز للمستخدم الحالي
   status: "Active" | "Coming Soon";
   rewardPoints: number; // النقاط اللي بتربحها عند الإكمال
 }
@@ -61,7 +72,7 @@ export interface NutritionTip {
   description: string;
 }
 
-// البدائل الذكية المذكورة في التصميم[cite: 1]
+// البدائل الذكية المذكورة في التصميم
 export interface HealthySwap {
   oldItem: string;
   newItem: string;
@@ -70,14 +81,14 @@ export interface HealthySwap {
 
 export interface WeeklyActivity {
   day: string; // MON, TUE...
-  value: number; // قيمة النشاط للبار تشارت[cite: 1]
+  value: number; // قيمة النشاط للبار تشارت
 }
 
 export interface UserStats {
   weight: number;
   restingHR: number;
   avgSleep: number;
-  timeSpent: number; // إجمالي الوقت بالدقائق[cite: 1]
+  timeSpent: number; // إجمالي الوقت بالدقائق
 }
 
 export interface ChallengeItem {
@@ -90,4 +101,17 @@ export interface ChallengeItem {
   isBig: boolean;
   desc: string;
   completed?: boolean; // علامة الاستفهام تعني أنه اختياري
+}
+
+// واجهة رد سيرفر كلاوديناري المتوقع
+export interface CloudinaryUploadResponse {
+  secure_url: string;
+  [key: string]: unknown; // للسماح بالحقول الأخرى التي يرجعها السيرفر دون مشاكل
+}
+
+// واجهة البيانات التي سيتم إرسالها لـ Firestore
+export interface UserUpdateFields {
+  photoURL?: string;
+  beforeImg?: string;
+  afterImg?: string;
 }

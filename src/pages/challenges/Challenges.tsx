@@ -1,6 +1,8 @@
-import { useState } from "react";
+// src/pages/Challenges.tsx
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
+import { useChallengeStore } from "../../store/challengeStore";
 import {
   FaWalking,
   FaClock,
@@ -10,13 +12,38 @@ import {
   FaGem,
 } from "react-icons/fa";
 import { BiTargetLock } from "react-icons/bi";
-import type { ChallengeItem } from "../../types";
+
+// دالة مساعدة لترجمة النصوص القادمة من Firestore إلى مكونات أيقونات حقيقية
+const renderIcon = (iconName: string, size: number) => {
+  switch (iconName) {
+    case "walking":
+      return <FaWalking size={size} />;
+    case "clock":
+      return <FaClock size={size} />;
+    case "glass":
+    case "water":
+      return <FaGlassWhiskey size={size} />;
+    case "gem":
+    case "star":
+      return <FaGem size={size} />;
+    default:
+      return <FaGem size={size} />;
+  }
+};
 
 const Challenges = () => {
   const { user, addPoints } = useAuthStore();
-  const [completedId, setCompletedId] = useState<number | null>(null);
+  const { challenges, isLoading, fetchChallenges, completeChallengeInDB } =
+    useChallengeStore();
+  const [completedId, setCompletedId] = useState<string | null>(null);
 
-  // بيانات أيام الأسبوع للالتزام
+  // جلب التحديات عند تحميل الصفحة وإلغاء الاستماع عند الخروج منها لمنع تسريب الذاكرة
+  useEffect(() => {
+    const unsubscribe = fetchChallenges();
+    return () => unsubscribe();
+  }, [fetchChallenges]);
+
+  // بيانات أيام الأسبوع للالتزام (يمكن ربطها لاحقاً أيضاً)
   const weekDays = [
     { day: "س", status: "completed" },
     { day: "ح", status: "completed" },
@@ -27,57 +54,15 @@ const Challenges = () => {
     { day: "ج", status: "pending" },
   ];
 
-  const [challenges, setChallenges] = useState<ChallengeItem[]>([
-    {
-      id: 1,
-      title: "تحدي الـ 10,000 خطوة",
-      icon: <FaWalking size={28} />,
-      points: 20,
-      target: 10000,
-      current: 7500,
-      isBig: true,
-      desc: "المشي هو أذكى وسيلة لحرق الدهون وتقوية القلب. اجعلي الحركة جزءاً من يومكِ وانطلقي!",
-    },
-    {
-      id: 2,
-      title: "ثبات البلانك",
-      icon: <FaClock size={24} />,
-      points: 15,
-      target: 120,
-      current: 0,
-      isBig: false,
-      desc: "دقيقتان من التركيز كفيلة بنحت عضلات البطن وتقوية الظهر.",
-    },
-    {
-      id: 3,
-      title: "نظام الهيدرات",
-      icon: <FaGlassWhiskey size={24} />,
-      points: 10,
-      target: 8,
-      current: 5,
-      isBig: false,
-      desc: "اشربي 8 أكواب ماء اليوم لنضارة تدوم وصفاء ذهني كامل.",
-    },
-    {
-      id: 4,
-      title: "تحدي الالتزام الذهبي",
-      icon: <FaGem size={28} />,
-      points: 50,
-      target: 7,
-      current: 6,
-      isBig: true,
-      desc: "أنتِ على وشك إنهاء أسبوع كامل من النشاط! أكملي هذا التحدي للحصول على نقاط مضاعفة ووسام الالتزام.",
-    },
-  ]);
-
-  const handleComplete = (id: number, points: number) => {
-    addPoints(points);
+  const handleComplete = async (id: string, points: number, target: number) => {
     setCompletedId(id);
-    setChallenges((prev) =>
-      prev.map((ch) =>
-        ch.id === id ? { ...ch, current: ch.target, completed: true } : ch,
-      ),
-    );
+
+    // 1. تحديث نقاط المستخدم في الـ AuthStore وفي جدول الـ Users بـ Firestore
+    await addPoints(points);
+
+    // 2. تحديث التحدي في جدول الـ Challenges بـ Firestore
+    await completeChallengeInDB(id, target);
+
     setTimeout(() => setCompletedId(null), 3000);
   };
 
@@ -100,9 +85,7 @@ const Challenges = () => {
           </p>
         </motion.section>
 
-        {/* 1. Header مع بوكس النقاط المدمج - Responsive */}
-
-        {/* بوكس النقاط المدمج (ليس Fixed) */}
+        {/* بوكس النقاط المدمج */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -184,86 +167,101 @@ const Challenges = () => {
           </div>
         </div>
       </motion.section>
-      {/* 3. شبكة التحديات الـ 4 (Bento Grid) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {challenges.map((ch, index) => (
-          <motion.div
-            key={ch.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`bg-card-bg border border-white/5 p-8 rounded-[40px] flex flex-col justify-between group hover:border-brand-primary/30 transition-all duration-500 relative overflow-hidden
-              ${ch.isBig ? "lg:col-span-2" : "lg:col-span-1"}
-            `}
-          >
-            {/* Decorative gradient flare */}
-            <div className="absolute -right-20 -top-20 w-40 h-40 bg-brand-primary/5 rounded-full blur-[80px] group-hover:bg-brand-primary/10 transition-all" />
 
-            <div>
-              <div className="flex justify-between items-start mb-8">
-                <div className="p-4 bg-white/5 text-brand-primary rounded-2xl group-hover:scale-110 group-hover:bg-brand-primary group-hover:text-white transition-all duration-500">
-                  {ch.icon}
-                </div>
-                <div className="text-left bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-                  <span className="text-xs text-gray-500 block mb-1">
-                    النقاط
-                  </span>
-                  <span className="text-xl font-black text-brand-primary">
-                    +{ch.points}
-                  </span>
-                </div>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
-                {ch.title}
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-8">
-                {ch.desc}
-              </p>
-            </div>
+      {/* 3. شبكة التحديات الحقيقية القادمة من السيرفر */}
+      {isLoading ? (
+        <div className="text-center text-gray-400 py-12 text-lg font-bold animate-pulse">
+          جاري تحميل التحديات بالوقت الفعلي من السيرفر...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {challenges.map((ch, index) => {
+            const percentage = Math.min(
+              Math.round((ch.current / ch.target) * 100),
+              100,
+            );
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold px-1">
-                  <span className="text-brand-primary">
-                    {Math.round((ch.current / ch.target) * 100)}%
-                  </span>
-                  <span className="text-gray-500">
-                    {ch.current.toLocaleString()} / {ch.target.toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(ch.current / ch.target) * 100}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full bg-brand-primary shadow-[0_0_15px_#FF69B4]"
-                  />
-                </div>
-              </div>
+            return (
+              <motion.div
+                key={ch.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`bg-card-bg border border-white/5 p-8 rounded-[40px] flex flex-col justify-between group hover:border-brand-primary/30 transition-all duration-500 relative overflow-hidden
+                  ${ch.isBig ? "lg:col-span-2" : "lg:col-span-1"}
+                `}
+              >
+                <div className="absolute -right-20 -top-20 w-40 h-40 bg-brand-primary/5 rounded-full blur-[80px] group-hover:bg-brand-primary/10 transition-all" />
 
-              <AnimatePresence mode="wait">
-                {completedId === ch.id || ch.completed ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center text-green-400 font-bold py-3 bg-green-400/5 rounded-2xl border border-green-400/10"
-                  >
-                    تم بنجاح! +{ch.points} نقطة
-                  </motion.div>
-                ) : (
-                  <button
-                    onClick={() => handleComplete(ch.id, ch.points)}
-                    className="w-full py-4 bg-white/5 border border-white/10 hover:border-brand-primary/50 hover:bg-brand-primary/5 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 group/btn"
-                  >
-                    سجلي الإنجاز{" "}
-                    <BiTargetLock className="group-hover/btn:rotate-90 transition-transform duration-500" />
-                  </button>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                <div>
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="p-4 bg-white/5 text-brand-primary rounded-2xl group-hover:scale-110 group-hover:bg-brand-primary group-hover:text-white transition-all duration-500">
+                      {renderIcon(ch.iconName, ch.isBig ? 28 : 24)}
+                    </div>
+                    <div className="text-left bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                      <span className="text-xs text-gray-500 block mb-1">
+                        النقاط
+                      </span>
+                      <span className="text-xl font-black text-brand-primary">
+                        +{ch.points}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
+                    {ch.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                    {ch.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold px-1">
+                      <span className="text-brand-primary">{percentage}%</span>
+                      <span className="text-gray-500">
+                        {ch.current.toLocaleString()} /{" "}
+                        {ch.target.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full bg-brand-primary shadow-[0_0_15px_#FF69B4]"
+                      />
+                    </div>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {completedId === ch.id || ch.completed ? (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center text-green-400 font-bold py-3 bg-green-400/5 rounded-2xl border border-green-400/10"
+                      >
+                        تم بنجاح! +{ch.points} نقطة
+                      </motion.div>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleComplete(ch.id, ch.points, ch.target)
+                        }
+                        className="w-full py-4 bg-white/5 border border-white/10 hover:border-brand-primary/50 hover:bg-brand-primary/5 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-3 group/btn"
+                      >
+                        سجلي الإنجاز{" "}
+                        <BiTargetLock className="group-hover/btn:rotate-90 transition-transform duration-500" />
+                      </button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Footer التحفيزي */}
       <footer className="text-center pt-10 opacity-40">
         <p className="text-sm">كل خطوة صغيرة تقربكِ من هدفكِ الكبير.</p>

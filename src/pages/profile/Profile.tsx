@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 import { useNavigate } from "react-router-dom";
 import {
+  doc,
+  updateDoc,
+  type DocumentData,
+  type WithFieldValue,
+} from "firebase/firestore";
+import { db } from "../../firebase/firebaseConfig";
+import { Loader } from "lucide-react";
+import {
   FaCamera,
   FaFire,
   FaTrophy,
@@ -15,15 +23,30 @@ import {
   FaSignOutAlt,
   FaChalkboardTeacher,
 } from "react-icons/fa";
+import type { CloudinaryUploadResponse } from "../../types";
 
 const Profile = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updatePassword, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
-  // States
-  const [profileImg, setProfileImg] = useState<string | null>(null);
-  const [beforeImage, setBeforeImage] = useState<string | null>(null);
-  const [afterImage, setAfterImage] = useState<string | null>(null);
+  // ثوابت إعدادات Cloudinary الخاصة بكِ (تم التصحيح)
+  const CLOUD_NAME = "ci1j6cjc";
+  const UPLOAD_PRESET = "fitflow_preset";
+
+  // الحالات المحلية لإدارة الصور بأمان ومنع تكرار الـ Render
+  const [profileImg, setProfileImg] = useState<string | null>(
+    user?.photoURL || null,
+  );
+  const [beforeImage, setBeforeImage] = useState<string | null>(
+    user?.beforeImg || null,
+  );
+  const [afterImage, setAfterImage] = useState<string | null>(
+    user?.afterImg || null,
+  );
+  const [uploadingType, setUploadingType] = useState<
+    "profile" | "before" | "after" | null
+  >(null);
+
   const [activeModal, setActiveModal] = useState<
     "password" | "calories" | "bmi" | null
   >(null);
@@ -69,35 +92,131 @@ const Profile = () => {
     }
   };
 
-  // 3. حفظ كلمة السر وإغلاق المودال
-  const handlePasswordUpdate = () => {
-    // هنا مستقبلاً نربط مع الـ API
-    alert("تم تحديث كلمة السر بنجاح!");
-    setActiveModal(null);
+  // 3. حفظ كلمة السر الفعلية وإغلاق المودال
+  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState(""); // لحفظ حقول الإدخال للمودال
+
+  const handlePasswordUpdate = async () => {
+    if (!newPassword) return;
+    try {
+      if (updatePassword) {
+        await updatePassword(newPassword);
+        alert("تم تحديث كلمة السر بنجاح!");
+        setActiveModal(null);
+        setNewPassword("");
+        setCurrentPassword("");
+      }
+    } catch (err) {
+      console.error("Error updating password:", err);
+    }
   };
 
-  const handleFileUpload = (
+  // رفع الملفات لـ Cloudinary وتحديث الحالات ومتجر الأمان بنوع بيانات صريح ومطابق للفايربيز وبدون any
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: (val: string) => void,
+    type: "profile" | "before" | "after",
   ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setter(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file || !user?.id) return;
+    setUploadingType(type);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const xhr = new XMLHttpRequest();
+
+      const uploadPromise = new Promise<CloudinaryUploadResponse>(
+        (resolve, reject) => {
+          xhr.open(
+            "POST",
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            true,
+          );
+
+          xhr.onload = () => {
+            try {
+              const responseText = JSON.parse(
+                xhr.responseText,
+              ) as CloudinaryUploadResponse & { error?: { message: string } };
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(responseText);
+              } else {
+                const serverMessage =
+                  responseText.error?.message ||
+                  `كود حالة السيرفر: ${xhr.status}`;
+                reject(new Error(serverMessage));
+              }
+            } catch (errorParse) {
+              console.log(errorParse);
+              reject(new Error("حدث خطأ أثناء معالجة رد السيرفر."));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("حدث خطأ في اتصال الشبكة."));
+          xhr.ontimeout = () => reject(new Error("انتهت مهلة طلب الرفع."));
+
+          xhr.timeout = 25000;
+          xhr.send(formData);
+        },
+      );
+
+      const data = await uploadPromise;
+      const downloadURL = data.secure_url;
+
+      const userDocRef = doc(db, "users", user.id);
+
+      // استخدام أنواع الفايربيز الرسمية لمنع الـ Type Mismatch
+      const updateData: WithFieldValue<DocumentData> = {};
+      const localUpdate: {
+        photoURL?: string;
+        beforeImg?: string;
+        afterImg?: string;
+      } = {};
+
+      if (type === "profile") {
+        updateData.photoURL = downloadURL;
+        localUpdate.photoURL = downloadURL;
+        await updateDoc(userDocRef, updateData);
+        setProfileImg(downloadURL);
+      } else if (type === "before") {
+        updateData.beforeImg = downloadURL;
+        localUpdate.beforeImg = downloadURL;
+        await updateDoc(userDocRef, updateData);
+        setBeforeImage(downloadURL);
+      } else if (type === "after") {
+        updateData.afterImg = downloadURL;
+        localUpdate.afterImg = downloadURL;
+        await updateDoc(userDocRef, updateData);
+        setAfterImage(downloadURL);
+      }
+
+      // 2. تحديث متجر useAuthStore فوراً لمزامنة الصورة وتثبيتها عند عمل Refresh
+      if (user) {
+        Object.assign(user, localUpdate);
+      }
+
+      alert("تم رفع وتحديث الصورة بنجاح وتأمين حفظها! 🎉");
+    } catch (err) {
+      const errorInstance = err instanceof Error ? err : new Error(String(err));
+      console.error("Cloudinary Detailed Error Log:", errorInstance);
+      alert(`تنبيه Cloudinary: ${errorInstance.message}`);
+    } finally {
+      setUploadingType(null);
     }
   };
 
   const status = [
     {
       label: "النقاط",
-      value: user?.points,
+      value: user?.points || 0,
       icon: <FaGem />,
       color: "text-blue-400",
     },
     {
       label: "التزام",
-      value: user?.streak,
+      value: user?.streak || 0,
       icon: <FaFire />,
       color: "text-orange-500",
     },
@@ -142,29 +261,44 @@ const Profile = () => {
       {/* 1. Header: Personal Image & Identity */}
       <section className="relative bg-linear-to-br from-brand-primary/20 via-card-bg to-card-bg border border-white/10 rounded-[40px] p-8 md:p-12 overflow-hidden shadow-2xl">
         <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-          {/* Change Profile Image */}
           <div className="relative group">
             <label className="block w-32 h-32 md:w-44 md:h-44 rounded-full border-[6px] border-brand-primary/20 p-1.5 cursor-pointer hover:border-brand-primary transition-all relative overflow-hidden shadow-2xl">
-              <img
-                src={
-                  profileImg ||
-                  `https://ui-avatars.com/api/?name=${user?.name}&background=FF69B4&color=fff&size=200`
-                }
-                className="w-full h-full rounded-full object-cover"
-                alt="Profile"
-              />
+              {uploadingType === "profile" ? (
+                <div className="w-full h-full bg-black/60 rounded-full flex items-center justify-center">
+                  <Loader
+                    className="animate-spin text-brand-primary"
+                    size={24}
+                  />
+                </div>
+              ) : (
+                <img
+                  src={
+                    profileImg ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=FF69B4&color=fff&size=200`
+                  }
+                  className="w-full h-full rounded-full object-cover"
+                  alt="Profile"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=FF69B4&color=fff&size=200`;
+                  }}
+                />
+              )}
+
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all">
                 <FaCamera className="text-white text-2xl mb-1" />
                 <span className="text-[10px] text-white font-bold">
                   تغيير الصورة
                 </span>
               </div>
+
               <input
                 type="file"
                 className="hidden"
-                onChange={(e) => handleFileUpload(e, setProfileImg)}
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e, "profile")}
               />
             </label>
+
             <div className="absolute -bottom-2 -right-2 bg-brand-primary p-3 rounded-2xl shadow-xl border-4 border-card-bg">
               <FaGem className="text-white" />
             </div>
@@ -186,12 +320,13 @@ const Profile = () => {
             <div className="bg-black/20 p-5 rounded-3xl border border-white/5 backdrop-blur-md">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-brand-primary font-bold text-sm">
-                  مستوى {user?.tier || "ماسي"}
+                  مستوى {user?.tier || "برونزي"}
                 </span>
                 <span className="text-gray-400 text-xs font-bold">
                   {stats.points} / {stats.nextLevelPoints} نقطة
                 </span>
               </div>
+
               <div className="h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
                 <motion.div
                   initial={{ width: 0 }}
@@ -227,31 +362,38 @@ const Profile = () => {
         {/* Before & After Card */}
         <div className="bg-card-bg border border-white/5 rounded-[40px] p-8 space-y-6">
           <h2 className="text-xl font-bold text-white">توثيق الإنجاز</h2>
+
           <div className="grid grid-cols-2 gap-4">
-            {["before", "after"].map((type) => (
+            {(["before", "after"] as const).map((type) => (
               <div key={type} className="relative group">
-                <label className="block aspect-3/4 bg-white/5 border-2 border-dashed border-white/10 rounded-[30px] overflow-hidden cursor-pointer hover:border-brand-primary transition-all">
-                  {(type === "before" ? beforeImage : afterImage) ? (
+                <label className="block aspect-3/4 bg-white/5 border-2 border-dashed border-white/10 rounded-[30px] overflow-hidden cursor-pointer hover:border-brand-primary transition-all relative">
+                  {uploadingType === type ? (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Loader
+                        className="animate-spin text-brand-primary"
+                        size={20}
+                      />
+                    </div>
+                  ) : (type === "before" ? beforeImage : afterImage) ? (
                     <img
                       src={type === "before" ? beforeImage! : afterImage!}
                       className="w-full h-full object-cover"
+                      alt={type}
                     />
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 gap-2">
                       <FaCamera /> <span className="text-[10px]">رفع صورة</span>
                     </div>
                   )}
+
                   <input
                     type="file"
                     className="hidden"
-                    onChange={(e) =>
-                      handleFileUpload(
-                        e,
-                        type === "before" ? setBeforeImage : setAfterImage,
-                      )
-                    }
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, type)}
                   />
                 </label>
+
                 <div
                   className={`absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-black ${type === "before" ? "bg-gray-700 text-white" : "bg-brand-primary text-white"}`}
                 >
@@ -264,7 +406,6 @@ const Profile = () => {
 
         {/* Action Center */}
         <div className="space-y-4">
-          {/* حاسبة السعرات الزر التفاعلي */}
           <button
             onClick={() => setActiveModal("calories")}
             className="w-full p-6 bg-linear-to-r from-brand-primary/20 to-transparent border border-brand-primary/30 rounded-[30px] flex items-center justify-between group active:scale-[0.98] transition-all shadow-xl"
@@ -288,7 +429,6 @@ const Profile = () => {
               التحكم والأمان
             </h2>
 
-            {/* تغيير كلمة السر */}
             <button
               onClick={() => setActiveModal("password")}
               className="w-full p-4 bg-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-all text-sm text-white font-bold"
@@ -299,7 +439,6 @@ const Profile = () => {
               <FaChevronLeft className="text-gray-700" />
             </button>
 
-            {/* الخانة الثالثة التفاعلية (BMI) */}
             <button
               onClick={() => setActiveModal("bmi")}
               className="w-full p-4 bg-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-all text-sm text-white font-bold"
@@ -310,7 +449,6 @@ const Profile = () => {
               <FaChevronLeft className="text-gray-700" />
             </button>
 
-            {/* تسجيل الخروج */}
             <button
               onClick={handleLogout}
               className="w-full p-4 bg-red-500/5 rounded-2xl flex items-center justify-between group hover:bg-red-500/10 transition-all text-sm text-red-500 font-bold mt-4"
@@ -323,7 +461,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* 5. Inspiration & Guidelines Section - الركن الإرشادي */}
+      {/* 5. Inspiration & Guidelines Section */}
       <section className="space-y-6 pt-10">
         <div className="flex items-center gap-3 px-2">
           <div className="h-8 w-1.5 bg-brand-primary rounded-full" />
@@ -362,7 +500,6 @@ const Profile = () => {
             </div>
           </motion.div>
 
-          {/* قائمة الإرشادات السريعة */}
           <div className="bg-card-bg border border-white/5 rounded-[40px] p-8 space-y-6">
             <h3 className="text-lg font-bold text-white border-b border-white/5 pb-4">
               إرشادات سريعة
@@ -382,7 +519,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* بطاقة "سؤال للمدربة" - تفاعلية خفيفة */}
         <div className="bg-linear-to-r from-brand-primary/10 via-card-bg to-transparent border border-white/5 rounded-[30px] p-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4 text-center md:text-right">
             <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-2xl">
@@ -401,12 +537,11 @@ const Profile = () => {
           </button>
         </div>
       </section>
-      {/*  */}
 
       {/* --- Modals Overlay --- */}
       <AnimatePresence>
         {activeModal && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -421,7 +556,6 @@ const Profile = () => {
               exit={{ scale: 0.9, y: 30 }}
               className="bg-card-bg border border-white/10 p-8 rounded-[40px] w-full max-w-md relative z-10 text-right"
             >
-              {/* محتوى مودال كلمة السر */}
               {activeModal === "password" && (
                 <div className="space-y-4">
                   <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
@@ -430,23 +564,31 @@ const Profile = () => {
                   <input
                     type="password"
                     placeholder="كلمة السر الحالية"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-primary"
                   />
                   <input
                     type="password"
                     placeholder="كلمة السر الجديدة"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-primary"
                   />
                   <button
                     onClick={handlePasswordUpdate}
-                    className="w-full py-4 bg-brand-primary text-white font-bold rounded-2xl shadow-lg shadow-brand-primary/30"
+                    disabled={isLoading}
+                    className="w-full py-4 bg-brand-primary text-white font-bold rounded-2xl shadow-lg shadow-brand-primary/30 flex items-center justify-center"
                   >
-                    حفظ التغييرات
+                    {isLoading ? (
+                      <Loader className="animate-spin" size={18} />
+                    ) : (
+                      "حفظ التغييرات"
+                    )}
                   </button>
                 </div>
               )}
 
-              {/* محتوى مودال حاسبة السعرات */}
               {activeModal === "calories" && (
                 <div className="space-y-4">
                   <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
@@ -491,6 +633,7 @@ const Profile = () => {
                   >
                     احسبي الآن
                   </button>
+
                   {result && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -508,7 +651,6 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* محتوى مودال الـ BMI */}
               {activeModal === "bmi" && (
                 <div className="space-y-4 text-center">
                   <h2 className="text-2xl font-bold text-white mb-4">
