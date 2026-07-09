@@ -1,4 +1,3 @@
-// src/pages/Challenges.tsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
@@ -43,7 +42,7 @@ const Challenges = () => {
     return () => unsubscribe();
   }, [fetchChallenges]);
 
-  // بيانات أيام الأسبوع للالتزام (يمكن ربطها لاحقاً أيضاً)
+  // بيانات أيام الأسبوع للالتزام
   const weekDays = [
     { day: "س", status: "completed" },
     { day: "ح", status: "completed" },
@@ -235,16 +234,19 @@ const Challenges = () => {
                   </div>
 
                   <AnimatePresence mode="wait">
-                    {completedId === ch.id || ch.completed ? (
+                    {completedId === ch.id ? (
                       <motion.div
+                        key="success"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
                         className="text-center text-green-400 font-bold py-3 bg-green-400/5 rounded-2xl border border-green-400/10"
                       >
                         تم بنجاح! +{ch.points} نقطة
                       </motion.div>
                     ) : (
                       <button
+                        key="action-btn"
                         onClick={() =>
                           handleComplete(ch.id, ch.points, ch.target)
                         }
