@@ -9,6 +9,7 @@ const DesktopNav = () => {
     { path: "/workouts", label: "التمارين" },
     { path: "/challenges", label: "التحديات" },
     { path: "/nutrition", label: "التغذية" },
+    { path: "/clubs", label: "الأندية والتوصيات" }, // الرابط الجديد
     { path: "/profile", label: "حسابي" },
   ];
 
@@ -35,7 +36,11 @@ const DesktopNav = () => {
             <NavLink
               to="/admin"
               className={({ isActive }) =>
-                `px-4 py-2 rounded-xl bg-brand-primary/10 border border-brand-primary/20 font-bold transition-all ${isActive ? "bg-brand-primary text-white" : "text-brand-primary hover:bg-brand-primary hover:text-white"}`
+                `px-4 py-2 rounded-xl bg-brand-primary/10 border border-brand-primary/20 font-bold transition-all ${
+                  isActive
+                    ? "bg-brand-primary text-white"
+                    : "text-brand-primary hover:bg-brand-primary hover:text-white"
+                }`
               }
             >
               لوحة التحكم

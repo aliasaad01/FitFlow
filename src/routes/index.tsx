@@ -14,6 +14,7 @@ const Challenges = lazy(() => import("../pages/challenges/Challenges"));
 const Nutrition = lazy(() => import("../pages/nutrition/Nutrition"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
 const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const Clubs = lazy(() => import("../pages/clubs/Clubs")); // إضافة استيراد صفحة الأندية والتوصيات
 
 const AppRoutes = () => {
   return (
@@ -30,18 +31,20 @@ const AppRoutes = () => {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/nutrition" element={<Nutrition />} />
+            <Route path="/clubs" element={<Clubs />} />{" "}
+            {/* مسار صفحة الأندية والتوصيات */}
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Route>
 
-        {/* 3. مسار الأدمن (تعديل: حماية الصلاحية + فصل الـ Layout إذا لزم الأمر) */}
+        {/* 3. مسار الأدمن */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminDashboard />} />
         </Route>
 
         {/* 4. مسار افتراضي */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>{" "}
+      </Routes>
     </Suspense>
   );
 };

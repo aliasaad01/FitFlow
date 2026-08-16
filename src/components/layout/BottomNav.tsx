@@ -1,13 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { Home, Dumbbell, Trophy, Utensils, User } from "lucide-react";
+import { Home, Dumbbell, Trophy, Utensils, User, MapPin } from "lucide-react"; // تم إضافة MapPin
 
 const BottomNav = () => {
   const navItems = [
-    { path: "/", icon: <Home size={24} />, label: "الرئيسية" },
-    { path: "/workouts", icon: <Dumbbell size={24} />, label: "تمارين" },
-    { path: "/challenges", icon: <Trophy size={24} />, label: "تحديات" },
-    { path: "/nutrition", icon: <Utensils size={24} />, label: "تغذية" },
-    { path: "/profile", icon: <User size={24} />, label: "حسابي" },
+    { path: "/", icon: <Home size={22} />, label: "الرئيسية" },
+    { path: "/workouts", icon: <Dumbbell size={22} />, label: "تمارين" },
+    { path: "/challenges", icon: <Trophy size={22} />, label: "تحديات" },
+    { path: "/nutrition", icon: <Utensils size={22} />, label: "تغذية" },
+    { path: "/clubs", icon: <MapPin size={22} />, label: "الأندية" }, // العنصر الجديد
+    { path: "/profile", icon: <User size={22} />, label: "حسابي" },
   ];
 
   return (
@@ -23,7 +24,7 @@ const BottomNav = () => {
             `}
           >
             {item.icon}
-            <span className="text-[10px] font-bold">{item.label}</span>
+            <span className="text-[9px] font-bold">{item.label}</span>
           </NavLink>
         ))}
       </div>
